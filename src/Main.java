@@ -1,11 +1,13 @@
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+import javax.naming.spi.DirStateFactory;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -32,47 +34,46 @@ public class Main {
             Request req = new Request(request);
            
             if (req.type == Request.Type.HTML) {
-                String response = getHtml(req.url);
-                String data = String.format("%s\n%s", createHeaders(req.contetType, response.length()), response);
-                ws.sendResponse(data.getBytes(), s);
+                byte[] c = getHtml(req.url);
+                byte[] h = createHeaders(req.contetType, c.length);
+                
+                ws.sendResponse(concatBytes(h, c), s);
                 
             } else {
-                String response = getImage(req.url);
-                String data = String.format("%s\n%s", createHeaders(req.contetType, response.length()), response);
-                ws.sendResponse(data.getBytes(), s);
+                byte[] c = getFile(req.url);
+                byte[] h = createHeaders(req.contetType, c.length);
+                
+                
+                ws.sendResponse(concatBytes(h, c), s);
             }
         
         }
     }
     
+    private static byte[] concatBytes(byte[] a, byte[] b) {
+        byte[] c = new byte[a.length + b.length];
+        System.arraycopy(a, 0, c, 0, a.length);
+        System.arraycopy(b, 0, c, a.length, b.length);
+        return c;
+    }
     
-    public static String createHeaders(String contetType, int length) {
+    public static byte[] createHeaders(String contetType, int length) {
         String data = "HTTP/1.1 200 OK\n";
             data +=       "Content-Type: " + contetType + ";\n";
             data +=       "Server: Xulapa 7.2\n";
             data +=       "Connection: close\n";
-            data +=       "Content-Length: " +length + "\n";
-            
-        return data;
+            data +=       "Content-Length: " +length + "\n\n";
+         
+        return data.getBytes();
     }
     
-    public static String getHtml(String file) {
+    public static byte[] getHtml(String file) {
         String result = "";
         if (file == null || file.isEmpty() || file.equals("/")){
             file = "\\home.html";
         }
         
-        byte[] content = getFile(file);
-        
-        if (content != null) {
-            try {
-                result = new String(content, "UTF-8");
-            } catch (Exception e) {
-                
-            }
-        }
-            
-        return result;
+        return getFile(file);
     }
     
     private static byte[] getFile(String file) {
