@@ -48,13 +48,8 @@ public class FileHelper {
         return data.getBytes();
     }
     
-    public static byte[] getHtml(String file) {
-        String result = "";
-        if (file == null || file.isEmpty() || file.equals("/")){
-            file = "\\home.html";
-        }
-        
-        return getFile(file);
+    public static byte[] getDefaultHtml(String file) {
+        return getFile("\\home.html");
     }
     
     public static byte[] getFile(String file) {

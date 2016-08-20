@@ -1,11 +1,10 @@
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -43,30 +42,41 @@ public class WebServer {
         StringBuilder header = new StringBuilder();
         StringBuilder body = new StringBuilder();
         String line;
-        boolean readingHeader = true;
-        boolean appendLine = true;
         
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
             command = in.readLine();
+            System.out.println(command);
+            
             while ((line = in.readLine()) != null && !line.isEmpty()) {
-                if (line.equals("\n")) {
-                    readingHeader = false;
-                    continue;
-                }
-                if (readingHeader) {
-                    header.append(line);
-                    header.append(System.getProperty("line.separator"));
-                } else {
-                    body.append(line);
-                    body.append(System.getProperty("line.separator"));
+                header.append(line);
+                header.append(System.getProperty("line.separator"));
+                
+            }
+            
+            request = new Request(command, header.toString().trim());
+            
+            HashMap<String, String> headers = request.getHeaders();
+            
+            if (headers.containsKey("Content-Length")) {
+                int length = Integer.parseInt(headers.get("Content-Length"));
+                
+                if (length > 0) {
+                    int read;
+                    while ((read = in.read()) != -1) {
+                        body.append((char) read);
+                        if (body.length() == length)
+                            break;
+                    }
+                    request.setBody(body.toString());
                 }
             }
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
         
-        return new Request(command, header.toString().trim(), body.toString().trim());
+        return request;
     }
 
     public byte[] processRequest(String request) {

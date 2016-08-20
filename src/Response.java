@@ -28,14 +28,13 @@ public class Response {
             return;
         }
         
-        switch (request.getType()) {
-            case JPG:
-                body = FileHelper.getFile(request.getUrl());
-                break;
-            default:
-                body = FileHelper.getHtml(request.getUrl());
-                break;
+//        Request.Method method = request.getMethod();
+        body = FileHelper.getFile(request.getUrl());
+        
+        if (body == null && request.getUrl().equals("/")) {
+            body = FileHelper.getDefaultHtml(request.getUrl());
         }
+        
         processHeader();
     }
     

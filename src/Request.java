@@ -21,13 +21,20 @@ public class Request {
     public HashMap<String, String> headers;
     public HashMap<String, String> parameters;
     
-    public Request(String command, String header, String body) {
+    public Request(String command, String header) {
         headers = new HashMap<>();
         parameters = new HashMap<>();
         
         processCommand(command);
         processHeader(header);
+    }
+
+    public void setBody(String body) {
         processBody(body);
+    }
+    
+    public HashMap<String, String> getHeaders() {
+        return headers;
     }
 
     public String getContetType() {
@@ -60,6 +67,7 @@ public class Request {
     }
     
     private void processBody(String body) {
+        processParameters(body);
     }
     
     private void processCommand(String cmd) {
@@ -99,7 +107,11 @@ public class Request {
     }
     
     private void processParameters(String str) {
-        String[] parts = str.split("&");
+        String[] parts = new String[] { str };
+                
+        if (str.contains("&")) {
+            parts = str.split("&");
+        }
         
         for (String part : parts) {
             String[] temp = part.split("=");
