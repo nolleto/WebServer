@@ -37,19 +37,36 @@ public class WebServer {
         }
     }
 
-    public String receiveRequest(Socket s) {
+    public Request receiveRequest(Socket s) {
+        Request request = null;
         String command = null;
+        StringBuilder header = new StringBuilder();
+        StringBuilder body = new StringBuilder();
         String line;
+        boolean readingHeader = true;
+        boolean appendLine = true;
+        
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
             command = in.readLine();
-            while ((line = in.readLine()).length() > 0) {
-                continue;
+            while ((line = in.readLine()) != null && !line.isEmpty()) {
+                if (line.equals("\n")) {
+                    readingHeader = false;
+                    continue;
+                }
+                if (readingHeader) {
+                    header.append(line);
+                    header.append(System.getProperty("line.separator"));
+                } else {
+                    body.append(line);
+                    body.append(System.getProperty("line.separator"));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return command;
+        
+        return new Request(command, header.toString().trim(), body.toString().trim());
     }
 
     public byte[] processRequest(String request) {

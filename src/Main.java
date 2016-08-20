@@ -5,7 +5,6 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -27,81 +26,42 @@ public class Main {
         ws.setUp();
         while(true){
             Socket s = ws.waitForConnections();
-            String request = ws.receiveRequest(s);
-            ws.processRequest(request); 
-            Request req = new Request(request);
-           
-            if (req.type == Request.Type.HTML) {
-                String response = getHtml(req.url);
-                String data = String.format("%s\n%s", createHeaders(req.contetType, response.length()), response);
-                ws.sendResponse(data.getBytes(), s);
-                
-            } else {
-                String response = getImage(req.url);
-                String data = String.format("%s\n%s", createHeaders(req.contetType, response.length()), response);
-                ws.sendResponse(data.getBytes(), s);
-            }
-        
-        }
-    }
-    
-    
-    public static String createHeaders(String contetType, int length) {
-        String data = "HTTP/1.1 200 OK\n";
-            data +=       "Content-Type: " + contetType + ";\n";
-            data +=       "Server: Xulapa 7.2\n";
-            data +=       "Connection: close\n";
-            data +=       "Content-Length: " +length + "\n";
-            
-        return data;
-    }
-    
-    public static String getHtml(String file) {
-        String result = "";
-        if (file == null || file.isEmpty() || file.equals("/")){
-            file = "\\home.html";
-        }
-        
-        byte[] content = getFile(file);
-        
-        if (content != null) {
+            Request request = ws.receiveRequest(s);
+            Response response = null;
             try {
-                result = new String(content, "UTF-8");
-            } catch (Exception e) {
+                response = new Response(request);
                 
+            } catch (Exception e) {
             }
-        }
             
-        return result;
+            if (response == null) {
+                response = Response.ServerError();
+            }
+            
+            ws.sendResponse(response.toBytes(), s);
+//            try {
+//                String request = ws.receiveRequest(s);
+//                ws.processRequest(request); 
+//                Request req = new Request(request);
+//
+//                if (req.type == Request.Type.HTML) {
+//                    byte[] c = getHtml(req.url);
+//                    byte[] h = createHeaders(req.contetType, c.length);
+//
+//                    ws.sendResponse(concatBytes(h, c), s);
+//
+//                } else {
+//                    byte[] c = getFile(req.url);
+//                    byte[] h = createHeaders(req.contetType, c.length);
+//
+//
+//                    ws.sendResponse(concatBytes(h, c), s);
+//                }
+//            } catch (Exception e) {
+//                ws.sendResponse(errorHeaders(), s);
+//            }
+        }
     }
     
-    private static byte[] getFile(String file) {
-        try {
-            File currentDirFile = new File("src" + file);
-            String strPath = currentDirFile.getAbsolutePath();
-            Path path = Paths.get(strPath);
-
-            FileInputStream fis = new FileInputStream(currentDirFile);
-            
-            return Files.readAllBytes(path);
-        
-        } catch (Exception e) {
-            
-        }
-        return null;
-    }
     
-    public static String getImage(String file) {
-        byte[] content = getFile(file);
-        
-        if (content != null) {
-            try {
-                return new String(content, "utf-8");
-            } catch (Exception e) {
-                
-            }
-        }
-            
-        return "";
-    }
 }
